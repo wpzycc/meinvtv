@@ -1,0 +1,182 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>随机美女图 | AQ</title>
+  <!-- 引入Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入Font Awesome图标 -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <!-- Tailwind配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4F46E5',
+            secondary: '#10B981',
+            neutral: '#1F2937',
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .loading-spinner {
+        @apply animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full;
+      }
+      .btn-primary {
+        @apply px-6 py-3 bg-primary text-white rounded-lg shadow-lg hover:bg-primary/90 active:scale-95 transition-all duration-200 flex items-center gap-2;
+      }
+      .btn-secondary {
+        @apply px-6 py-3 bg-secondary text-white rounded-lg shadow-lg hover:bg-secondary/90 active:scale-95 transition-all duration-200 flex items-center gap-2;
+      }
+    }
+  </style>
+</head>
+<body class="font-inter bg-gray-50 min-h-screen flex flex-col">
+  <!-- 头部导航 -->
+  <header class="bg-white shadow-sm sticky top-0 z-10">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+      <h1 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-neutral flex items-center gap-2">
+        <i class="fa fa-picture-o text-primary"></i>
+        <span>随机美女图</span>
+      </h1>
+      <p class="text-gray-500 text-sm md:text-base">轻触/点击切换图片</p>
+    </div>
+  </header>
+
+  <!-- 主内容区 -->
+  <main class="flex-grow container mx-auto px-4 py-8 md:py-12 flex flex-col items-center">
+    <!-- 图片外层容器：控制最大宽度并居中 -->
+    <div id="img-wrapper" class="w-full max-w-4xl mb-4 flex flex-col items-center">
+
+      <!-- 加载状态 -->
+      <div id="loading" class="flex flex-col items-center justify-center gap-4 p-8 bg-gray-100 rounded-xl shadow-md min-h-[300px] w-full">
+        <div class="loading-spinner"></div>
+        <p class="text-gray-600">正在加载图片...</p>
+      </div>
+
+      <!-- 错误状态 -->
+      <div id="error" class="flex flex-col items-center justify-center gap-4 p-8 bg-gray-100 rounded-xl shadow-md hidden w-full">
+        <i class="fa fa-exclamation-triangle text-4xl text-red-500"></i>
+        <p class="text-gray-600">图片加载失败，请重试</p>
+      </div>
+
+      <!-- 图片元素：自适应大小 -->
+      <img id="random-image"
+           class="hidden max-w-full h-auto rounded-xl shadow-md border border-gray-200"
+           alt="随机美女图"
+           loading="lazy" />
+
+    </div>
+
+    <!-- 功能按钮区 -->
+    <div class="w-full max-w-4xl flex flex-col sm:flex-row gap-4 justify-center mt-6">
+      <button id="refresh-btn" class="btn-primary w-full sm:w-auto justify-center">
+        <i class="fa fa-refresh"></i>
+        <span>换一张</span>
+      </button>
+      <button id="download-btn" class="btn-secondary w-full sm:w-auto justify-center" disabled>
+        <i class="fa fa-download"></i>
+        <span>下载图片</span>
+      </button>
+    </div>
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="bg-neutral text-white py-4">
+    <div class="container mx-auto px-4 text-center text-sm">
+      <p>© 2025 随机美女库 AQ网盘资源</p>
+      <p class="mt-1 text-gray-400">点击图片或按 R 键可快速切换</p>
+    </div>
+  </footer>
+
+  <!-- JavaScript逻辑 -->
+  <script>
+    // 获取DOM元素
+    const imageElement = document.getElementById('random-image');
+    const loadingElement = document.getElementById('loading');
+    const errorElement = document.getElementById('error');
+    const refreshBtn = document.getElementById('refresh-btn');
+    const downloadBtn = document.getElementById('download-btn');
+
+    // 图片接口地址（说明中已标注来源）
+    const API_URL = 'https://pic.ltywl.top/mn/api.php?direct=1&password=123456&category=all';
+
+    // 生成带时间戳的URL避免缓存
+    function getImageUrl() {
+      return `${API_URL}&t=${new Date().getTime()}`;
+    }
+
+    // 加载随机图片
+    function loadRandomImage() {
+      imageElement.classList.add('hidden');
+      errorElement.classList.add('hidden');
+      loadingElement.classList.remove('hidden');
+      downloadBtn.disabled = true;
+
+      const img = new Image();
+      img.src = getImageUrl();
+
+      img.onload = function () {
+        loadingElement.classList.add('hidden');
+        imageElement.src = img.src;
+        imageElement.classList.remove('hidden');
+        downloadBtn.disabled = false;
+      };
+
+      img.onerror = function () {
+        loadingElement.classList.add('hidden');
+        errorElement.classList.remove('hidden');
+        downloadBtn.disabled = true;
+      };
+    }
+
+    // 下载图片功能
+    function downloadImage() {
+      if (!imageElement.src) return;
+      const link = document.createElement('a');
+      link.href = imageElement.src;
+      link.download = `随机图片_${Date.now()}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      const originalText = downloadBtn.innerHTML;
+      downloadBtn.innerHTML = '<i class="fa fa-check"></i><span>下载成功</span>';
+      setTimeout(() => {
+        downloadBtn.innerHTML = originalText;
+      }, 1500);
+    }
+
+    // 事件监听
+    refreshBtn.addEventListener('click', loadRandomImage);
+    downloadBtn.addEventListener('click', downloadImage);
+
+    // ✅ 仅点击图片本身换图（更精准）
+    imageElement.addEventListener('click', (e) => {
+      e.stopPropagation();
+      loadRandomImage();
+    });
+
+    // 页面加载时自动加载第一张图片
+    window.addEventListener('DOMContentLoaded', loadRandomImage);
+
+    // 键盘快捷键支持
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'r' || e.key === 'R') {
+        loadRandomImage();
+      }
+      if ((e.key === 'd' || e.key === 'D') && !downloadBtn.disabled) {
+        downloadImage();
+      }
+    });
+  </script>
+</body>
+</html>
